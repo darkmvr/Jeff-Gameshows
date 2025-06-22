@@ -6,8 +6,8 @@ import datetime
 from discord.ext import tasks, commands
 import os
 
-TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
+TOKEN = os.getenv('DISCORD_TOKEN')
+CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
 
 SHOW_FEEDS = [
     'https://www.gematsu.com/feed',
@@ -88,6 +88,7 @@ async def send_reminder(link, minutes_left):
     await channel.send(msg)
 
 def estimate_event_time(entry):
+    # Placeholder: just returns 2 days from now for every event
     return datetime.datetime.utcnow() + datetime.timedelta(days=2)
 
 bot.run(TOKEN)
