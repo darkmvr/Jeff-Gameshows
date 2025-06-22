@@ -66,8 +66,7 @@ jeff_quotes = [
     "Gaming world, brace yourselves!",
     "Jeff’s got the hot takes ready.",
     "Bring the hype, bring the energy!",
-    "Streaming news — Jeff’s favorite news.",
-    # ... (Add as many more as you want)
+    "Streaming news — Jeff’s favorite news."
 ]
 
 jeff_statuses = [
@@ -92,6 +91,54 @@ jeff_statuses = [
     "pinging stream alerts",
     "game reveals incoming",
 ]
+
+# Hardcoded major gaming events for the year (you can update annually)
+UPCOMING_SHOWS = [
+    ("Nintendo Direct", datetime.datetime(2025, 7, 24, 15, 0)),  # Example date/time UTC
+    ("Summer Game Fest", datetime.datetime(2025, 6, 28, 18, 0)),
+    ("Gamescom", datetime.datetime(2025, 8, 21, 16, 0)),
+    ("PlayStation State of Play", datetime.datetime(2025, 9, 5, 17, 0)),
+    ("The Game Awards", datetime.datetime(2025, 12, 5, 1, 0)),
+    ("Steam Summer Sale", datetime.datetime(2025, 6, 20, 19, 0)),
+    ("Steam Winter Sale", datetime.datetime(2025, 12, 20, 19, 0)),
+]
+
+# Jeff fun facts & personality snippets for !jeff command
+JEFF_FACTS = [
+    "Jeff loves world premieres and surprise announcements!",
+    "Jeff’s countdowns are precise to the minute.",
+    "Jeff once stayed up 48 hours straight hyping game reveals.",
+    "Jeff’s favorite snack? Popcorn with extra hype sauce.",
+    "Jeff believes every great game reveal needs an epic soundtrack.",
+    "Jeff sometimes talks to his bot avatar for hype inspiration.",
+    "Jeff’s dream is to host his own global game awards show.",
+    "Jeff is powered by pure gamer enthusiasm and caffeine.",
+    "Jeff’s countdown reminders are legendary among fans.",
+    "Jeff’s motto: Stay hyped, stay awesome!",
+]
+
+# --- Utility Functions ---
+
+def format_timedelta(td):
+    total_seconds = int(td.total_seconds())
+    days, remainder = divmod(total_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = []
+    if days > 0:
+        parts.append(f"{days}d")
+    if hours > 0 or days > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0 or hours > 0 or days > 0:
+        parts.append(f"{minutes}m")
+    parts.append(f"{seconds}s")
+    return " ".join(parts)
+
+def estimate_event_time(entry):
+    # Dummy placeholder: always set event 2 days from now
+    return datetime.datetime.utcnow() + datetime.timedelta(days=2)
+
+# --- Background Tasks ---
 
 @bot.event
 async def on_ready():
@@ -163,8 +210,50 @@ async def send_reminder(link, minutes_left):
         msg = f"⏱️ **Reminder: Showcase starts in {minutes_left} minutes!**\n🔗 [Stream Link]({link})\nJeff says: 'Grab your snacks and hydrate. It’s almost showtime.'"
     await channel.send(msg)
 
-def estimate_event_time(entry):
-    # Dummy placeholder: always set event 2 days from now
-    return datetime.datetime.utcnow() + datetime.timedelta(days=2)
+# --- Commands ---
 
+@bot.command(name='upcoming')
+async def upcoming(ctx):
+    """Shows upcoming game showcases and sales with countdowns."""
+    now = datetime.datetime.utcnow()
+    embed = discord.Embed(title="📅 Upcoming Game Showcases & Events", color=0xFF4500)
+    for event_name, event_dt in UPCOMING_SHOWS:
+        if event_dt > now:
+            delta = event_dt - now
+            embed.add_field(
+                name=event_name,
+                value=f"Starts in {format_timedelta(delta)} (UTC)\n<t:{int(event_dt.timestamp())}:F>",
+                inline=False
+            )
+    await ctx.send(embed=embed)
+
+@bot.command(name='jeff')
+async def jeff(ctx):
+    """Random Jeff personality quote and fun fact."""
+    quote = random.choice(jeff_quotes)
+    fact = random.choice(JEFF_FACTS)
+    embed = discord.Embed(title="🎤 About JeffBot", color=0xFF0000)
+    embed.add_field(name="Quote", value=quote, inline=False)
+    embed.add_field(name="Fun Fact", value=fact, inline=False)
+    embed.set_footer(text="Powered by gamer hype and popcorn!")
+    await ctx.send(embed=embed)
+
+@bot.command(name='sales')
+async def sales(ctx):
+    """Shows current/upcoming Steam sales and gaming events."""
+    now = datetime.datetime.utcnow()
+    embed = discord.Embed(title="🔥 Steam Sales & Major Gaming Events", color=0x00BFFF)
+    for event_name, event_dt in UPCOMING_SHOWS:
+        if "Steam" in event_name or "Sale" in event_name:
+            if event_dt > now:
+                delta = event_dt - now
+                embed.add_field(
+                    name=event_name,
+                    value=f"Starts in {format_timedelta(delta)} (UTC)\n<t:{int(event_dt.timestamp())}:F>",
+                    inline=False
+                )
+    embed.set_footer(text="Get ready to save some $$$ and expand your library!")
+    await ctx.send(embed=embed)
+
+# --- Run Bot ---
 bot.run(TOKEN)
