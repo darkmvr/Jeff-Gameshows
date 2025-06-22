@@ -7,7 +7,8 @@ from discord.ext import tasks, commands
 import os
 
 TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))  # Set this in Render's environment variables
+CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
+
 SHOW_FEEDS = [
     'https://www.gematsu.com/feed',
     'https://www.ign.com/feed',
@@ -21,7 +22,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 posted_links = set()
-reminder_schedule = {}  # link: datetime mapping
+reminder_schedule = {}
 
 @bot.event
 async def on_ready():
@@ -35,10 +36,12 @@ async def check_feeds():
         feed = feedparser.parse(url)
         for entry in feed.entries:
             title_lower = entry.title.lower()
-            if any(keyword in title_lower for keyword in ["nintendo direct", "state of play", "game awards", "xbox showcase", "summer game fest", "gamescom"]):
+            if any(keyword in title_lower for keyword in [
+                "nintendo direct", "state of play", "game awards",
+                "xbox showcase", "summer game fest", "gamescom"
+            ]):
                 if entry.link not in posted_links:
                     posted_links.add(entry.link)
-                    # Try to estimate a time from the summary or title (basic, can be improved)
                     event_time = estimate_event_time(entry)
                     if event_time:
                         reminder_schedule[entry.link] = event_time
@@ -53,7 +56,7 @@ async def post_announcement(entry, event_time):
         color=0xff0000
     )
     embed.set_author(name="JeffBot - Showcase Summoner", icon_url="https://i.imgur.com/jUxx1VQ.png")
-    embed.set_thumbnail(url="https://i.imgur.com/oM3gQNa.png")  # Placeholder image
+    embed.set_thumbnail(url="https://i.imgur.com/oM3gQNa.png")
     if event_time:
         embed.add_field(name="📅 Date", value=f"<t:{int(event_time.timestamp())}:F>", inline=False)
         embed.set_footer(text="Countdown reminders set! ⏳")
@@ -79,16 +82,12 @@ async def countdown_reminders():
 async def send_reminder(link, minutes_left):
     channel = bot.get_channel(CHANNEL_ID)
     if minutes_left == 0:
-        msg = f"🚨 **It's LIVE!**
-▶️ [Watch here]({link})\nJeff says: 'LET'S GO. World Premieres are loading... 🎬'"
+        msg = f"🚨 **It's LIVE!**\n▶️ [Watch here]({link})\nJeff says: 'LET'S GO. World Premieres are loading... 🎬'"
     else:
         msg = f"⏱️ **Reminder: Showcase starts in {minutes_left} minutes!**\n🔗 [Stream Link]({link})\nJeff says: 'Grab your snacks and hydrate. It’s almost showtime.'"
     await channel.send(msg)
 
-# Dummy time estimator (placeholder)
 def estimate_event_time(entry):
-    # Try to find a datetime in the entry summary (improve later with regex/LLM)
-    # For now, just simulate an event 2 days from now
     return datetime.datetime.utcnow() + datetime.timedelta(days=2)
 
 bot.run(TOKEN)
