@@ -2,11 +2,11 @@ import discord
 from discord.ext import tasks, commands
 import feedparser
 import asyncio
-import datetime
-import random
 import os
+import datetime
 from flask import Flask
 import threading
+import random
 
 # --- Flask keep-alive server ---
 app = Flask("")
@@ -14,109 +14,20 @@ app = Flask("")
 @app.route("/")
 def home():
     return random.choice([
-        "JeffBot is awake and summoning showcases! 🎮",
-        "Jeff is tracking game events and sales! 🔥",
-        "Ready to hype your next game reveal! 🎤",
-        "JeffBot online — let’s get hyped! 🎉",
-        "Stay tuned, Jeff’s got your game news! 🚀"
+        "JeffBot is live and ready to hype your showcases!",
+        "The countdown continues... Jeff is watching.",
+        "JeffBot online! Time to get your popcorn ready.",
+        "Stay tuned! Jeff's got the latest show news.",
+        "Jeff says: 'World premieres incoming!'"
     ]), 200
 
 def run_flask():
     app.run(host="0.0.0.0", port=8080)
 
+# Start Flask in a separate daemon thread
 threading.Thread(target=run_flask, daemon=True).start()
 
-# --- Environment variables ---
-TOKEN = os.getenv('DISCORD_TOKEN')
-CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
-
-# --- Jeff personality quotes (full large list) ---
-jeff_quotes = [
-    "Jeff says: 'Get ready for world premieres, surprises, and maybe some gamer tears. 🎤'",
-    "Jeff says: 'This is gonna be good. Like, really good.'",
-    "Jeff says: 'Brace yourself for hype overload!'",
-    "Jeff says: 'Grab your snacks and hydrate. It’s almost showtime.'",
-    "Jeff says: 'Who else is excited? Jeff is beyond hype!'",
-    "Jeff says: 'Countdowns are my cardio.'",
-    "Jeff says: 'Don’t blink or you’ll miss the magic.'",
-    "Jeff says: 'The future of gaming is about to be revealed.'",
-    "Jeff says: 'This is not a drill, folks!'",
-    "Jeff says: 'Keep your eyes peeled and your ears open.'",
-    "Jeff says: 'The hype is real, and I’m here for it!'",
-    "Jeff says: 'World premieres incoming — better have your snacks ready!'",
-    "Jeff says: 'Time to gather the hype squad! 🚀'",
-    "Jeff says: 'Major announcements? You know Jeff’s on it.'",
-    "Jeff says: 'Stay calm and watch the stream.'",
-    "Jeff says: 'Hype levels critical, activate all notifications!'",
-    "Jeff says: 'I live for these moments, don’t you?'",
-    "Jeff says: 'Nothing beats the feeling of a new reveal.'",
-    "Jeff says: 'Watch parties are mandatory.'",
-    "Jeff says: 'It’s gonna be legendary, trust me.'",
-    "Jeff says: 'Can’t wait to see your reactions!'",
-    "Jeff says: 'It’s almost time... Let’s do this!'",
-    "Jeff says: 'Your hype manager is on the job.'",
-    "Jeff says: 'Making the impossible look possible — that’s Jeff’s motto.'",
-    "Jeff says: 'Got the popcorn ready? Because it’s showtime!'",
-    "Jeff says: 'The countdown starts now — hype incoming!'",
-    "Jeff says: 'You don’t want to miss this, trust me.'",
-    "Jeff says: 'JeffBot: your official hype coach.'",
-    "Jeff says: 'Stream, hype, repeat.'",
-    "Jeff says: 'Every announcement feels like Christmas morning.'",
-    "Jeff says: 'Prepare your hype muscles.'",
-    "Jeff says: 'We’re live in T-minus... NOW!'",
-    "Jeff says: 'Buckle up for an epic ride.'",
-    "Jeff says: 'From teasers to trailers, Jeff’s got it covered.'",
-    "Jeff says: 'The countdown to awesome continues.'",
-    "Jeff says: 'This is the hype you deserve.'",
-    "Jeff says: 'Epic reveals ahead — keep your eyes glued!'",
-]
-
-# --- Jeff statuses (large list) ---
-jeff_statuses = [
-    "summoning game showcases 🎮",
-    "tracking world premieres 🔥",
-    "counting down to epic reveals ⏳",
-    "hype mode: ON 🚀",
-    "bringing you the freshest news 🎤",
-    "waiting for the next big announcement",
-    "chasing exclusive leaks 👀",
-    "assembling hype squads worldwide",
-    "refreshing feeds like a pro",
-    "prepping for the next Game Awards",
-    "gearing up for Nintendo Direct",
-    "brewing coffee and counting hype minutes",
-    "fine-tuning hype levels",
-    "loading exclusive leaks",
-    "on standby for Xbox showcase",
-    "checking Steam sale rumors",
-    "hyping the community daily",
-    "updating countdown timers",
-]
-
-# --- Upcoming shows & sales ---
-def next_date(month, day, hour=19, minute=0):
-    now = datetime.datetime.utcnow()
-    year = now.year
-    dt = datetime.datetime(year, month, day, hour, minute)
-    if dt < now:
-        dt = datetime.datetime(year + 1, month, day, hour, minute)
-    return dt
-
-UPCOMING_SHOWS = [
-    ("Nintendo Direct", next_date(7, 24, 15, 0)),
-    ("Summer Game Fest", next_date(6, 28, 18, 0)),
-    ("Gamescom", next_date(8, 21, 16, 0)),
-    ("PlayStation State of Play", next_date(9, 5, 17, 0)),
-    ("The Game Awards", next_date(12, 5, 1, 0)),
-    ("Steam Summer Sale", next_date(6, 20, 19, 0)),
-    ("Steam Halloween Sale", next_date(10, 28, 19, 0)),
-    ("Steam Autumn Sale", next_date(11, 22, 19, 0)),
-    ("Steam Winter Sale", next_date(12, 20, 19, 0)),
-    ("Epic Mega Sale", next_date(6, 15, 19, 0)),
-    ("Epic Halloween Sale", next_date(10, 25, 19, 0)),
-]
-
-# --- Show feeds to watch for ---
+# --- Discord Bot Setup ---
 SHOW_FEEDS = [
     'https://www.gematsu.com/feed',
     'https://www.ign.com/feed',
@@ -125,19 +36,100 @@ SHOW_FEEDS = [
     'https://news.xbox.com/en-us/feed/'
 ]
 
+TOKEN = os.getenv('DISCORD_TOKEN')
+CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
+
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 posted_links = set()
 reminder_schedule = {}
 
-# --- Background Tasks ---
+# Jeff personality quotes (full list, no cuts)
+jeff_quotes = [
+    "Jeff says: 'Get ready for world premieres, surprises, and maybe some gamer tears. 🎤'",
+    "Jeff’s hype level: Maximum!",
+    "Breaking news from Jeff: the hype train never stops!",
+    "Jeff’s countdown started — grab snacks and hydrate!",
+    "World premieres loading… Jeff is hyped!",
+    "Jeff says: ‘Stay tuned for surprises and exclusive reveals!’",
+    "The gaming gods have spoken, and Jeff relays the message.",
+    "Jeff’s microphone is hot — the show is coming!",
+    "Grab your controllers, Jeff’s got the scoop!",
+    "Jeff’s got the deets and he’s not keeping quiet!",
+    "Showtime’s almost here — Jeff’s got your back!",
+    "Jeff is the hype man your showcase deserves!",
+    "If excitement was a currency, Jeff’s rich!",
+    "Jeff’s got the insider info you need.",
+    "The countdown is on — Jeff’s got the timer!",
+    "Jeff says: 'Don’t blink or you’ll miss it!'",
+    "Ready for surprises? Jeff already is.",
+    "Jeff’s hype-o-meter is off the charts!",
+    "The stage is set, Jeff’s voice is loud.",
+    "Jeff says: 'This is gonna be legendary!'",
+    "Get ready, get set, Jeff’s ready to shout it out!",
+    "Jeff’s got more excitement than your favorite game.",
+    "Hype alert: Jeff is in the building!",
+    "Jeff says: 'This stream will change your life!'",
+    "Countdown started — Jeff’s cheering loud.",
+    "Jeff’s here to make sure you don’t miss a thing.",
+    "Nothing but good vibes and hype from Jeff!",
+    "Jeff’s got the best seats in the house for you.",
+    "Showcasing the best, with Jeff as your guide.",
+    "Jeff’s voice is your ultimate hype soundtrack.",
+    "It’s happening! Jeff can barely contain himself.",
+    "Jeff’s mic is ready for the big reveal!",
+    "Brace yourself, Jeff’s got announcements coming.",
+    "Jeff says: 'Let the games begin!'",
+    "Countdown’s ticking — Jeff’s counting with you.",
+    "Jeff’s hype game is stronger than ever!",
+    "The spotlight’s on, and Jeff’s shining bright.",
+    "Jeff’s got exclusive intel you can trust.",
+    "Get hype, Jeff’s delivering the news.",
+    "Jeff’s countdown reminders got you covered!",
+    "Jeff says: 'Don’t miss the action, folks!'",
+    "Let Jeff be your hype man all year round!",
+    "Jeff’s hype train never stops rolling!"
+]
+
+jeff_statuses = [
+    "hype-man duties in progress",
+    "counting down to the next big reveal",
+    "scouting world premieres",
+    "making hype happen",
+    "feeding on gamer excitement",
+    "announcing surprises and delights",
+    "boosting hype levels worldwide",
+    "ready to drop exclusive news",
+    "gathering showcase intel",
+    "spreading the hype vibes",
+    "warming up the mic",
+    "prepping the spotlight",
+    "waiting for the big moment",
+    "hype meter maxed out",
+    "watching streams and keeping score",
+    "ready to hype your next event",
+    "counting minutes till showtime",
+    "Jeff’s got the inside scoop",
+    "never missing a premiere",
+    "keeping hype fresh daily"
+]
+
+# Event dates for sales and showcases
+EVENTS = {
+    "Steam Summer Sale": datetime.datetime(datetime.datetime.now().year, 6, 27, 17, 0, 0),  # June 27 5PM UTC
+    "Steam Winter Sale": datetime.datetime(datetime.datetime.now().year, 12, 22, 17, 0, 0),  # Dec 22 5PM UTC
+    "Nintendo Direct": None,  # Could add actual dates if desired
+    "State of Play": None,
+    "Game Awards": datetime.datetime(datetime.datetime.now().year, 12, 7, 1, 0, 0),
+    "Summer Game Fest": None,
+    "Xbox Showcase": None
+}
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print(f'Logged in as {bot.user.name}')
     await bot.change_presence(activity=discord.Game(random.choice(jeff_statuses)))
     check_feeds.start()
     countdown_reminders.start()
@@ -162,8 +154,9 @@ async def check_feeds():
 async def post_announcement(entry, event_time):
     channel = bot.get_channel(CHANNEL_ID)
     if channel is None:
-        print(f"Channel {CHANNEL_ID} not found.")
+        print(f"Channel ID {CHANNEL_ID} not found.")
         return
+
     embed = discord.Embed(
         title=f"🎮 {entry.title}",
         url=entry.link,
@@ -197,6 +190,7 @@ async def countdown_reminders():
 async def send_reminder(link, minutes_left):
     channel = bot.get_channel(CHANNEL_ID)
     if channel is None:
+        print(f"Channel ID {CHANNEL_ID} not found.")
         return
     if minutes_left == 0:
         msg = f"🚨 **It's LIVE!**\n▶️ [Watch here]({link})\nJeff says: 'LET'S GO. World Premieres are loading... 🎬'"
@@ -205,61 +199,67 @@ async def send_reminder(link, minutes_left):
     await channel.send(msg)
 
 def estimate_event_time(entry):
-    # Placeholder: guess 2 days from now if no date in feed
+    # If the feed has published_parsed, we can get a datetime from it
+    if hasattr(entry, 'published_parsed'):
+        return datetime.datetime(*entry.published_parsed[:6])
+    # fallback to 2 days from now
     return datetime.datetime.utcnow() + datetime.timedelta(days=2)
 
-# --- Commands ---
+# --- Additional commands ---
 
-@bot.command(name="upcoming")
-async def upcoming(ctx):
+@bot.command(name="countdown")
+async def countdown(ctx, *, event_name=None):
     now = datetime.datetime.utcnow()
-    upcoming_events = [(name, dt) for (name, dt) in UPCOMING_SHOWS if dt > now]
-    if not upcoming_events:
-        await ctx.send("Jeff says: No upcoming shows or sales found! Stay tuned.")
+    if event_name is None:
+        await ctx.send("Please specify an event name. Use `!events` to see upcoming events.")
         return
-    upcoming_events.sort(key=lambda x: x[1])
-    embed = discord.Embed(
-        title="🎉 Upcoming Game Showcases & Sales",
-        color=0xff4500,
-        timestamp=now
-    )
-    for name, dt in upcoming_events:
-        delta = dt - now
-        days = delta.days
-        hours = delta.seconds // 3600
-        embed.add_field(name=name, value=f"Starts in {days}d {hours}h — <t:{int(dt.timestamp())}:F>", inline=False)
-    embed.set_footer(text="JeffBot countdowns powered by hype and caffeine.")
+    event = EVENTS.get(event_name)
+    if event is None:
+        await ctx.send(f"Sorry, I don't have info on '{event_name}'. Use `!events` for known events.")
+        return
+    delta = event - now
+    if delta.total_seconds() < 0:
+        await ctx.send(f"The event '{event_name}' already happened or is happening now!")
+        return
+    days, seconds = delta.days, delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    await ctx.send(f"⏳ Countdown for **{event_name}**: {days}d {hours}h {minutes}m remaining.")
+
+@bot.command(name="events")
+async def events(ctx):
+    now = datetime.datetime.utcnow()
+    embed = discord.Embed(title="📅 Upcoming Jeff-Notified Events & Sales", color=0xff4500)
+    for name, date in EVENTS.items():
+        if date is None:
+            value = "Date not set"
+        else:
+            if date < now:
+                value = "Already happened"
+            else:
+                value = f"<t:{int(date.timestamp())}:F>"
+        embed.add_field(name=name, value=value, inline=False)
     await ctx.send(embed=embed)
 
-@bot.command(name="jeff")
-async def jeff_info(ctx):
-    embed = discord.Embed(title="🎤 JeffBot Info & Personality", color=0xff0000)
-    embed.add_field(name="Status", value=random.choice(jeff_statuses), inline=False)
-    embed.add_field(name="Quotes Sample", value=random.choice(jeff_quotes), inline=False)
-    embed.set_footer(text="Powered by Jeff's endless hype.")
+@bot.command(name="jeffinfo")
+async def jeffinfo(ctx):
+    embed = discord.Embed(title="🎤 JeffBot Info", color=0xff4500)
+    embed.add_field(name="Bot Name", value=bot.user.name)
+    embed.add_field(name="Server Count", value=len(bot.guilds))
+    embed.add_field(name="Latency", value=f"{round(bot.latency * 1000)}ms")
+    embed.add_field(name="Total Show Announcements", value=len(posted_links))
     await ctx.send(embed=embed)
 
-@bot.command(name="ping")
-async def ping(ctx):
-    latency = round(bot.latency * 1000)
-    await ctx.send(f"🏓 Pong! JeffBot's brain ping is {latency}ms.")
+# Override default help to avoid conflicts
+@bot.command(name="helpme")
+async def helpme(ctx):
+    help_text = """
+**JeffBot Commands:**
+!countdown [event] - Get countdown to an event
+!events - List upcoming events & sales
+!jeffinfo - Info about JeffBot
+!helpme - Show this help message
+"""
+    await ctx.send(help_text)
 
-@bot.command(name="help")
-async def help_command(ctx):
-    commands_info = {
-        "!upcoming": "Show upcoming showcases & sales countdown",
-        "!jeff": "Learn about JeffBot's personality",
-        "!ping": "Check bot latency",
-        "!help": "Show this help message"
-    }
-    embed = discord.Embed(title="📋 JeffBot Commands", color=discord.Color.gold())
-    for cmd, desc in commands_info.items():
-        embed.add_field(name=cmd, value=desc, inline=False)
-    embed.set_footer(text="Stay hyped, stay gaming! 🎮")
-    await ctx.send(embed=embed)
-
-# --- Run the bot ---
-if not TOKEN:
-    print("ERROR: DISCORD_TOKEN environment variable missing!")
-else:
-    bot.run(TOKEN)
+bot.run(TOKEN)
