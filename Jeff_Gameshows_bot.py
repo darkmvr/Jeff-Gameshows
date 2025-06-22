@@ -5,9 +5,32 @@ import aiohttp
 import datetime
 from discord.ext import tasks, commands
 import os
+from flask import Flask
+import threading
+import random
 
-TOKEN = os.getenv('DISCORD_TOKEN')
-CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
+# --- Flask keep-alive server ---
+app = Flask("")
+
+@app.route("/")
+def home():
+    return random.choice([
+        "Jeff is live and hype! 🎮",
+        "Countdowns are ticking...",
+        "Showcases incoming! Stay tuned.",
+        "JeffBot watching the gaming horizon.",
+    ]), 200
+
+def run_flask():
+    app.run(host="0.0.0.0", port=8080)
+
+# Start Flask in a separate daemon thread so it won't block the Discord bot
+threading.Thread(target=run_flask, daemon=True).start()
+
+# --- Discord Bot Setup ---
+
+TOKEN = os.getenv('DISCORD_TOKEN')  # Your bot token here in env
+CHANNEL_ID = int(os.getenv('CHANNEL_ID'))  # Channel ID in env
 
 SHOW_FEEDS = [
     'https://www.gematsu.com/feed',
@@ -49,6 +72,9 @@ async def check_feeds():
 
 async def post_announcement(entry, event_time):
     channel = bot.get_channel(CHANNEL_ID)
+    if channel is None:
+        print(f"Could not find channel with ID {CHANNEL_ID}")
+        return
     embed = discord.Embed(
         title=f"🎮 {entry.title}",
         url=entry.link,
@@ -81,6 +107,9 @@ async def countdown_reminders():
 
 async def send_reminder(link, minutes_left):
     channel = bot.get_channel(CHANNEL_ID)
+    if channel is None:
+        print(f"Could not find channel with ID {CHANNEL_ID}")
+        return
     if minutes_left == 0:
         msg = f"🚨 **It's LIVE!**\n▶️ [Watch here]({link})\nJeff says: 'LET'S GO. World Premieres are loading... 🎬'"
     else:
@@ -88,7 +117,8 @@ async def send_reminder(link, minutes_left):
     await channel.send(msg)
 
 def estimate_event_time(entry):
-    # Placeholder: just returns 2 days from now for every event
+    # Placeholder: Always returns 2 days from now. 
+    # You can improve this with real date parsing from feed metadata if available.
     return datetime.datetime.utcnow() + datetime.timedelta(days=2)
 
 bot.run(TOKEN)
