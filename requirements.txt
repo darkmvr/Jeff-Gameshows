@@ -2,3 +2,6 @@ Flask
 discord.py
 feedparser
 aiohttp
+requests
+beautifulsoup4
+openai
