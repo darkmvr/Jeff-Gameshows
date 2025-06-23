@@ -7,6 +7,8 @@ import datetime
 from flask import Flask
 import threading
 import random
+import requests
+from urllib.parse import urlparse
 
 # --- Flask keep-alive server ---
 app = Flask("")
@@ -45,8 +47,9 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 posted_links = set()
 reminder_schedule = {}
+bad_sources = {}
 
-# Jeff personality quotes (full list, no cuts)
+# Jeff personality quotes
 jeff_quotes = [
     "Jeff says: 'Get ready for world premieres, surprises, and maybe some gamer tears. 🎤'",
     "Jeff’s hype level: Maximum!",
@@ -116,11 +119,11 @@ jeff_statuses = [
     "keeping hype fresh daily"
 ]
 
-# Event dates for sales and showcases
+# Event dates
 EVENTS = {
-    "Steam Summer Sale": datetime.datetime(datetime.datetime.now().year, 6, 27, 17, 0, 0),  # June 27 5PM UTC
-    "Steam Winter Sale": datetime.datetime(datetime.datetime.now().year, 12, 22, 17, 0, 0),  # Dec 22 5PM UTC
-    "Nintendo Direct": None,  # Could add actual dates if desired
+    "Steam Summer Sale": datetime.datetime(datetime.datetime.now().year, 6, 27, 17, 0, 0),
+    "Steam Winter Sale": datetime.datetime(datetime.datetime.now().year, 12, 22, 17, 0, 0),
+    "Nintendo Direct": None,
     "State of Play": None,
     "Game Awards": datetime.datetime(datetime.datetime.now().year, 12, 7, 1, 0, 0),
     "Summer Game Fest": None,
@@ -137,26 +140,35 @@ async def on_ready():
 @tasks.loop(minutes=15)
 async def check_feeds():
     for url in SHOW_FEEDS:
-        feed = feedparser.parse(url)
-        for entry in feed.entries:
-            title_lower = entry.title.lower()
-            if any(keyword in title_lower for keyword in [
-                "nintendo direct", "state of play", "game awards",
-                "xbox showcase", "summer game fest", "gamescom"
-            ]):
-                if entry.link not in posted_links:
-                    posted_links.add(entry.link)
-                    event_time = estimate_event_time(entry)
-                    if event_time:
-                        reminder_schedule[entry.link] = event_time
-                    await post_announcement(entry, event_time)
+        if bad_sources.get(url, 0) >= 3:
+            continue
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
+                bad_sources[url] = bad_sources.get(url, 0) + 1
+                continue
+            feed = feedparser.parse(response.content)
+            for entry in feed.entries:
+                title_lower = entry.title.lower()
+                if any(keyword in title_lower for keyword in [
+                    "nintendo direct", "state of play", "game awards",
+                    "xbox showcase", "summer game fest", "gamescom"
+                ]):
+                    if entry.link not in posted_links:
+                        posted_links.add(entry.link)
+                        event_time = estimate_event_time(entry)
+                        if event_time:
+                            reminder_schedule[entry.link] = event_time
+                        await post_announcement(entry, event_time)
+        except Exception as e:
+            print(f"Error fetching {url}: {e}")
+            bad_sources[url] = bad_sources.get(url, 0) + 1
 
 async def post_announcement(entry, event_time):
     channel = bot.get_channel(CHANNEL_ID)
     if channel is None:
         print(f"Channel ID {CHANNEL_ID} not found.")
         return
-
     embed = discord.Embed(
         title=f"🎮 {entry.title}",
         url=entry.link,
@@ -199,13 +211,9 @@ async def send_reminder(link, minutes_left):
     await channel.send(msg)
 
 def estimate_event_time(entry):
-    # If the feed has published_parsed, we can get a datetime from it
     if hasattr(entry, 'published_parsed'):
         return datetime.datetime(*entry.published_parsed[:6])
-    # fallback to 2 days from now
     return datetime.datetime.utcnow() + datetime.timedelta(days=2)
-
-# --- Additional commands ---
 
 @bot.command(name="countdown")
 async def countdown(ctx, *, event_name=None):
@@ -250,7 +258,6 @@ async def jeffinfo(ctx):
     embed.add_field(name="Total Show Announcements", value=len(posted_links))
     await ctx.send(embed=embed)
 
-# Override default help to avoid conflicts
 @bot.command(name="helpme")
 async def helpme(ctx):
     help_text = """
