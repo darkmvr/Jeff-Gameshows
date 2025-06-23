@@ -266,7 +266,25 @@ async def helpme(ctx):
 !events - List upcoming events & sales
 !jeffinfo - Info about JeffBot
 !helpme - Show this help message
+!upcomingshow - Post a test announcement for an upcoming gameshow
 """
     await ctx.send(help_text)
+
+# --- New command for posting an upcoming gameshow announcement ---
+@bot.command(name="upcomingshow")
+async def upcomingshow(ctx):
+    future_date = datetime.datetime.utcnow() + datetime.timedelta(days=10, hours=15)
+    embed = discord.Embed(
+        title="🎉 Upcoming Gameshow: Epic Gamer Reveal!",
+        description=random.choice(jeff_quotes),
+        color=0xFF4500,
+        timestamp=future_date
+    )
+    embed.set_author(name="JeffBot - Showcase Summoner", icon_url="https://i.imgur.com/jUxx1VQ.png")
+    embed.set_thumbnail(url="https://i.imgur.com/oM3gQNa.png")
+    embed.add_field(name="📅 Date & Time", value=f"<t:{int(future_date.timestamp())}:F>", inline=False)
+    embed.add_field(name="🔗 Watch Here", value="[Link Coming Soon](https://example.com)", inline=False)
+    embed.set_footer(text="Get ready to hype it up with JeffBot! 🚀")
+    await ctx.send(embed=embed)
 
 bot.run(TOKEN)
